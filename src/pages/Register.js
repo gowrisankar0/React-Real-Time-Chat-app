@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import Add from "../img/addAvatar.png";
-import {  createUserWithEmailAndPassword } from "firebase/auth";
-import {  auth } from "../firebae";
+import {  createUserWithEmailAndPassword,updateProfile } from "firebase/auth";
+import {  auth, storage } from "../firebae";
+import {ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { doc, setDoc } from "firebase/firestore";
+import { useNavigate, Link } from "react-router-dom";
 const Register = () => {
 
   const [error,setError] = useState(false)
@@ -17,7 +20,26 @@ const Register = () => {
   
 try {
   
-  const res =await  createUserWithEmailAndPassword(auth, email, password)
+  const res =await  createUserWithEmailAndPassword(auth, email, password);
+
+
+  const storageRef =ref(storage,displayName);
+
+  const uploadeTask =uploadBytesResumable(storageRef,file);
+
+
+  uploadeTask.on(
+    (error)=>{
+      setError(true)
+    },
+    getDownloadURL(uploadeTask.snapshot.ref).then(async(downloadeURL)=>{
+      // console.log("File available at",downloadeURl);
+      await updateProfile(res.user,{
+        displayName,
+        photoURL:downloadeURL
+      })
+    })
+  )
   
 } catch (error) {
 
